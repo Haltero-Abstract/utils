@@ -1,0 +1,65 @@
+# Build uIP tool (uip.tos) and the desk accessory version (uip.acc)
+# Toolchain: m68k-atari-mintelf-gcc 13 + libcmini 0.54
+#   make -f Makefile.acc LIBCMINI=/path/to/libcmini
+
+CROSS    ?= m68k-atari-mintelf-
+CC        = $(CROSS)gcc
+LIBCMINI ?= /opt/src/libcmini
+VERSION  ?= 382
+
+SRC = src
+CFLAGS = -fleading-underscore -Wa,--register-prefix-optional -m68000 -O2 -std=gnu99 -fomit-frame-pointer -fno-builtin \
+         -nostdlib -I$(LIBCMINI)/include -I$(SRC)/compat -I$(SRC) -I$(SRC)/uip -I$(SRC)/atari_http_server -I$(SRC)/atari_ftp_server \
+         -DVERSION=$(VERSION) -DDEBUG=0 -DUIP_CONF_BYTE_ORDER=BIG_ENDIAN \
+         -Wno-implicit-function-declaration -Wno-int-conversion \
+         -Wno-incompatible-pointer-types
+LDFLAGS = -m68000 -nostdlib -s -Wl,-e,__start
+LIBS    = -L$(LIBCMINI)/build -L/opt/cross/ulib -lcmini -lgcc
+
+COMMON_SRCS = $(SRC)/uip/drivers/netusbee/rtl8019.c $(SRC)/main.c \
+  $(SRC)/uip_arch.c $(SRC)/clock-arch.c $(SRC)/ioredirect.c \
+  $(SRC)/common.c $(wildcard $(SRC)/uip/*.c) \
+  $(SRC)/atari_ftp_server/ftpd.c $(SRC)/atari_http_server/httpd.c
+ASM_SRCS = $(SRC)/ioredirect-trap.s
+
+ACC_SRCS = $(SRC)/acc.c $(SRC)/accgem.c
+ACC_ASM  = $(SRC)/acccrit.s
+
+all: build/uip.tos build/uip.acc
+
+build/tos/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+build/tos/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) -m68000 -Wa,--register-prefix-optional -c $< -o $@
+
+build/acc/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -DUIP_ACC=1 -include $(SRC)/accshim.h -c $< -o $@
+build/acc/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) -m68000 -Wa,--register-prefix-optional -c $< -o $@
+
+TOS_OBJS = $(patsubst %.c,build/tos/%.o,$(COMMON_SRCS)) $(patsubst %.s,build/tos/%.o,$(ASM_SRCS))
+ACC_OBJS = $(patsubst %.c,build/acc/%.o,$(COMMON_SRCS) $(ACC_SRCS)) $(patsubst %.s,build/acc/%.o,$(ASM_SRCS)) $(patsubst %.s,build/acc/%.o,$(ACC_ASM))
+
+build/uip.tos: $(TOS_OBJS)
+	$(CC) $(LDFLAGS) $(LIBCMINI)/build/crt0.o $^ $(LIBS) -o $@
+
+build/uip.acc: $(ACC_OBJS)
+	$(CC) $(LDFLAGS) $(LIBCMINI)/build/crt0.o $^ $(LIBS) -o $@
+
+clean:
+	rm -rf build
+
+# Test build with a simulated network card (for Hatari, which has no NetUSBee)
+build/fake/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -DUIP_ACC=1 -DUIPACC_FAKE_NIC=1 -include $(SRC)/accshim.h -c $< -o $@
+build/fake/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) -m68000 -Wa,--register-prefix-optional -c $< -o $@
+FAKE_OBJS = $(patsubst %.c,build/fake/%.o,$(COMMON_SRCS) $(ACC_SRCS)) $(patsubst %.s,build/fake/%.o,$(ASM_SRCS)) $(patsubst %.s,build/fake/%.o,$(ACC_ASM))
+build/uip_test.acc: $(FAKE_OBJS)
+	$(CC) $(LDFLAGS) $(LIBCMINI)/build/crt0.o $^ $(LIBS) -o $@
