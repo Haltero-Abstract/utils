@@ -68,10 +68,12 @@ make -f Makefile.acc build/uip_test.acc                  # simulated-NIC test bu
 | `src/compat/inttypes.h`, `Makefile.acc`, `gen_ui.sh` | build without SCons |
 
 ## Tested
-Hatari 2.6.1, Falcon, EmuTOS 512k (FR), VGA: loading, window, desktop usable
-while active, buttons, launching a program and returning, disk-error alert.
-The real network path must be validated on hardware (Hatari does not emulate
-the NetUSBee).
+- **Real hardware**: Atari Falcon 030, 68882 FPU, 14 MB RAM, TOS 4.04,
+  4 GB CompactFlash with HDDriver 12, NetUSBee — HTTP/FTP server working
+  while the GEM desktop stays usable.
+- **Emulator**: Hatari 2.6.1, Falcon, EmuTOS 512k (FR), VGA: loading, window,
+  desktop usable while active, buttons, launching a program and returning,
+  disk-error alert (with a simulated NIC, `bin/test/UIP_TEST.ACC`).
 
 ## Credits & licences
 uIPtool and its components are distributed under the licences listed in
