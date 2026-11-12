@@ -14,6 +14,8 @@ INSTALLATION
 1. Copier UIP.ACC a la racine du disque de boot (C:\UIP.ACC).
 2. Redemarrer le Falcon.
 3. Menu "Bureau" > "uIP tool (reseau)" : une petite fenetre s'ouvre.
+   Langue automatique : francais si le TOS est francais (ou suisse
+   romand), anglais sinon ("Desk" > "uIP tool (network)").
 
 UTILISATION
 -----------

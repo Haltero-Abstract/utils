@@ -17,12 +17,16 @@ files, start GEM programs).
 
 ## Install
 1. Copy `bin/UIP.ACC` to the root of your boot drive (`C:\UIP.ACC`) and reboot.
-2. *Desk* menu → **uIP tool (reseau)**.
-3. **[ Activer ]** starts the network, **[DHCP/Fixe]** toggles DHCP / static IP
+2. *Desk* menu → **uIP tool (network)** (*Bureau* → **uIP tool (réseau)** on a French TOS).
+3. **[ Activate ]** starts the network, **[DHCP/Static]** toggles DHCP / static IP
    (static settings in `C:\UIP.CFG`, same format as `uip.tos`).
 4. Browse `http://<IP>` from your PC, or FTP to port 21 (passive mode, any login).
 
 The ON/OFF state is saved in `C:\UIPACC.INF` and restored at boot.
+
+**Language:** English or French, chosen automatically from the TOS language
+(`_AKP` cookie, or the country code of the TOS header). French is used for a
+French or Swiss-French TOS, English for every other language.
 
 ## Notes
 - The network is serviced on GEM timer events (every 20 ms). When a
@@ -59,7 +63,7 @@ make -f Makefile.acc build/uip_test.acc                  # simulated-NIC test bu
 ### Files added / changed vs. upstream
 | File | |
 |---|---|
-| `src/acc.c` | GEM window, `evnt_multi` loop, ON/OFF, autostart |
+| `src/acc.c` | GEM window, `evnt_multi` loop, ON/OFF, autostart, EN/FR strings |
 | `src/accgem.c/.h` | minimal AES/VDI bindings |
 | `src/acccrit.s` | `etv_critic` hook (pause during disk-error alerts) |
 | `src/uipacc.h`, `src/accshim.h` | accessory ↔ stack interface, `printf` capture |
@@ -71,7 +75,7 @@ make -f Makefile.acc build/uip_test.acc                  # simulated-NIC test bu
 - **Real hardware**: Atari Falcon 030, 68882 FPU, 14 MB RAM, TOS 4.04,
   4 GB CompactFlash with HDDriver 12, NetUSBee — HTTP/FTP server working
   while the GEM desktop stays usable.
-- **Emulator**: Hatari 2.6.1, Falcon, EmuTOS 512k (FR), VGA: loading, window,
+- **Emulator**: Hatari 2.6.1, Falcon, EmuTOS 512k (FR and US), VGA: loading, window,
   desktop usable while active, buttons, launching a program and returning,
   disk-error alert (with a simulated NIC, `bin/test/UIP_TEST.ACC`).
 

@@ -20,7 +20,6 @@
 #include "accgem.h"
 #include "uipacc.h"
 
-#define ACC_TITLE  "  uIP tool (reseau) "
 #define WIN_KIND   (NAME|CLOSER|MOVER)
 #define COLS 32
 #define ROWS 7
@@ -35,6 +34,52 @@ long _stksize = 16384;           /* libcmini: accessory stack size */
 extern void __mallocChunkSize(size_t siz);
 
 char uipacc_lastlog[64];
+
+/* ---- English / French, chosen from the TOS language ------------------ */
+/* French strings use the Atari character set: \x82 = e acute            */
+enum {
+  S_TITLE, S_NET, S_ON, S_OFF, S_IP_NONE, S_IP_WAIT, S_MODE, S_STATIC,
+  S_HINT, S_ERR_DRV, S_ERR_MINT, S_ERR_STIK, S_BTN_ON, S_BTN_OFF, S_BTN_MODE,
+  S_NOWIN, S_COUNT
+};
+static const char *const str_en[S_COUNT] = {
+  "  uIP tool (network) ", "Network: %s", "ON", "OFF", "IP     : -",
+  "IP     : waiting DHCP...", "Mode   : %s", "static IP (uip.cfg)",
+  "Web http://IP  FTP port 21", "Error: NetUSBee not found?",
+  "Error: not under MiNT", "Error: STiK/STinG loaded",
+  "  Activate  ", " Deactivate ", "[DHCP/Static]",
+  "[3][uIP tool:|no window available][ OK ]"
+};
+static const char *const str_fr[S_COUNT] = {
+  "  uIP tool (r\x82seau) ", "R\x82seau : %s", "ACTIF", "INACTIF", "IP     : -",
+  "IP     : attente DHCP...", "Mode   : %s", "IP fixe (uip.cfg)",
+  "Web http://IP  FTP port 21", "Erreur: NetUSBee absente ?",
+  "Erreur: pas sous MiNT", "Erreur: STiK/STinG charg\x82",
+  "  Activer   ", " D\x82sactiver ", "[DHCP/Fixe]",
+  "[3][uIP tool:|plus de fen\x88tre disponible][ OK ]"
+};
+static const char *const *tr = str_en;
+#define T(id) (tr[id])
+
+/* supervisor: 1 if the TOS language is French (France / Swiss French) */
+static long detect_french(void)
+{
+  long *jar = *(long **)0x5a0;          /* _p_cookies */
+  int lang = -1;
+  if (jar) {
+    for (; jar[0]; jar += 2)
+      if (jar[0] == 0x5f414b50L) {      /* '_AKP': bits 8-15 = language */
+        lang = (int)((jar[1] >> 8) & 0xff);
+        break;
+      }
+  }
+  if (lang < 0) {                       /* TOS header os_conf >> 1 = country */
+    unsigned char *sysbase = *(unsigned char **)0x4f2;
+    unsigned char *os = *(unsigned char **)(sysbase + 8);  /* os_beg */
+    lang = (*(unsigned short *)(os + 0x1c)) >> 1;
+  }
+  return (lang == 2 || lang == 7);      /* 2 = France, 7 = Swiss French */
+}
 
 /* acccrit.s: set while TOS is inside a critical-error alert (GEMDOS busy) */
 extern volatile short uipacc_in_critic;
@@ -117,28 +162,28 @@ static void fmt_line(char *out, int row)
   out[0] = 0;
   switch (row) {
   case 0:
-    sprintf(out, "Reseau : %s", st.active ? "ACTIF" : "INACTIF");
+    sprintf(out, T(S_NET), st.active ? T(S_ON) : T(S_OFF));
     break;
   case 1:
     if (!st.active)
-      strcpy(out, "IP     : -");
+      strcpy(out, T(S_IP_NONE));
     else if (st.ip[0] == 0 && !st.static_ip)
-      strcpy(out, "IP     : attente DHCP...");
+      strcpy(out, T(S_IP_WAIT));
     else
       sprintf(out, "IP     : %u.%u.%u.%u", st.ip[0], st.ip[1], st.ip[2], st.ip[3]);
     break;
   case 2:
-    sprintf(out, "Mode   : %s", st.static_ip ? "IP fixe (uip.cfg)" : "DHCP");
+    sprintf(out, T(S_MODE), st.static_ip ? T(S_STATIC) : "DHCP");
     break;
   case 3:
     if (st.active)
-      strcpy(out, "Web http://IP  FTP port 21");
+      strcpy(out, T(S_HINT));
     else if (last_err == UIPACC_ERR_DRIVER)
-      strcpy(out, "Erreur: NetUSBee absente ?");
+      strcpy(out, T(S_ERR_DRV));
     else if (last_err == UIPACC_ERR_MINT)
-      strcpy(out, "Erreur: pas sous MiNT");
+      strcpy(out, T(S_ERR_MINT));
     else if (last_err == UIPACC_ERR_STIK)
-      strcpy(out, "Erreur: STiK/STinG charge");
+      strcpy(out, T(S_ERR_STIK));
     break;
   case 4:
     strncpy(out, uipacc_lastlog, COLS);
@@ -150,8 +195,8 @@ static void fmt_line(char *out, int row)
     break;
 #endif
   case 6:
-    sprintf(out, "[%s] [DHCP/Fixe]",
-            st.active ? " Desactiver " : "  Activer   ");
+    sprintf(out, "[%s] %s",
+            st.active ? T(S_BTN_OFF) : T(S_BTN_ON), T(S_BTN_MODE));
     break;
   }
 }
@@ -160,7 +205,7 @@ static void fmt_line(char *out, int row)
 #define BTN1_C0 0
 #define BTN1_C1 14
 #define BTN2_C0 15
-#define BTN2_C1 27
+#define BTN2_C1 ((int)(BTN2_C0 + strlen(T(S_BTN_MODE)) - 1))
 
 static void draw_rect(short wkx, short wky, short wkw, short wkh, const short *clip)
 {
@@ -189,7 +234,7 @@ static void draw_rect(short wkx, short wky, short wkw, short wkh, const short *c
     v_box(vh, wkx + char_w / 2 + BTN1_C0 * char_w - 1, by - 1,
               wkx + char_w / 2 + BTN1_C1 * char_w, by + char_h);
     v_box(vh, wkx + char_w / 2 + BTN2_C0 * char_w - 1, by - 1,
-              wkx + char_w / 2 + BTN2_C1 * char_w, by + char_h);
+              wkx + char_w / 2 + (BTN2_C1 + 1) * char_w, by + char_h);
   }
   vs_clip(vh, 0, clip);
 }
@@ -249,7 +294,7 @@ static void open_window(void)
   else { x = wx; y = wy; }
   win = wind_create(WIN_KIND, x, y, w, h);
   if (win < 0) {
-    form_alert(1, "[3][uIP tool:|plus de fenetre disponible][ OK ]");
+    form_alert(1, T(S_NOWIN));
     win = -1;
     return;
   }
@@ -357,7 +402,8 @@ int main(void)
   uipacc_set_config_path(cfg_path);
   strcpy(uipacc_lastlog, "");
 
-  menu_id = menu_register(ap_id, ACC_TITLE);
+  if (Supexec(detect_french)) tr = str_fr;
+  menu_id = menu_register(ap_id, T(S_TITLE));
 
   load_autostart();
   if (autostart) net_on(); else refresh_status(1);
