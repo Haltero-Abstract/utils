@@ -1,6 +1,9 @@
 uIP tool ACC - reseau NetUSBee en arriere-plan du bureau GEM
 =============================================================
 
+Version NON OFFICIELLE, ecrite avec l'aide d'une IA (Claude), ni validee
+ni maintenue par les auteurs d'uIPtool. Licences : voir LICENSE.TXT.
+
 Base : uIPtool (Sqward / Nokturnal), depot sqward-uip-tools 0218184ebf8b
 (serveur web + FTP, DHCP ou IP fixe, NetUSBee / EtherNEC).
 Version accessoire : le reseau tourne pendant que le bureau GEM reste

@@ -1,5 +1,10 @@
 # uIP tool ACC — NetUSBee network in the background of the GEM desktop
 
+> **Unofficial fork.** This accessory front end was written with the help of an
+> AI assistant (Claude) and is **not endorsed, reviewed or maintained by the
+> uIPtool authors**. Please report problems here, not upstream.
+> Official uIPtool: <https://codeberg.org/nokturnal/uiptool>
+
 *(Français plus bas)*
 
 A **desk accessory** version of [uIPtool](https://bitbucket.org/sqward/uip-tools)
@@ -69,19 +74,23 @@ The real network path must be validated on hardware (Hatari does not emulate
 the NetUSBee).
 
 ## Credits & licences
-- **uIPtool** — Mariusz Buras (Sqward) & Nokturnal (Saulot), Christian Zietz
-  (USB/PicoWifi), upstream: <https://bitbucket.org/sqward/uip-tools>,
-  <https://codeberg.org/nokturnal/uiptool>. See `UPSTREAM_README.md`.
-- **uIP TCP/IP stack** — Adam Dunkels / SICS, BSD licence.
-  *This product includes software developed by Adam Dunkels.*
-- **RTL8019 driver** — based on the uIP-AVR port by Louis Beaudoin.
-- **USB drivers** (`src/uip/drivers/usb/`, not used by the NetUSBee build) — GPL v2.
-- **libcmini** (linked in the binaries) — FreeMiNT project, LGPL.
-- Accessory front end — Haltero / Abstract, 2026.
+uIPtool and its components are distributed under the licences listed in
+[`LICENSE.md`](LICENSE.md) (also shipped next to the binaries as
+`bin/LICENSE.TXT`); files without a licence header are MIT.
 
-Every source file keeps its original copyright header. Upstream has no global
-licence file; this repository is published as a fork in good faith — if you
-are one of the authors and want something changed, please open an issue.
+- **uIPtool**, uIP Atari TOS modifications — Copyright 2013-2026 Mariusz Buras (Sqward)
+- **UI, CI/CD** — Copyright 2019-2026 Paweł Góralski (Nokturnal); icons by Mark Jones
+- **uIP TCP/IP stack** — Adam Dunkels / Swedish Institute of Computer Science, BSD
+- **RTL8019AS driver** — Louis Beaudoin, egnite Software GmbH, David J. Hudson, BSD/GPL
+- **USB drivers** (`src/uip/drivers/usb/`, not used by the NetUSBee build) — GPL v2
+- **libcmini** (linked in the binaries) — FreeMiNT project, LGPL
+- **Accessory front end** (`acc.c`, `accgem.*`, `acccrit.s`, `uipacc.h`,
+  `accshim.h`, `Makefile.acc`, `gen_ui.sh`) — Haltero / Abstract 2026, MIT
+
+Required acknowledgements:
+*This product includes software developed by Adam Dunkels.*
+*This product includes software developed by egnite Software GmbH and its contributors.*
+*This product includes software developed by the University of California, Berkeley and its contributors.*
 
 ---
 
