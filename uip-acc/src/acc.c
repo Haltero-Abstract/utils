@@ -40,7 +40,7 @@ char uipacc_lastlog[64];
 enum {
   S_TITLE, S_NET, S_ON, S_OFF, S_IP_NONE, S_IP_WAIT, S_MODE, S_STATIC,
   S_HINT, S_ERR_DRV, S_ERR_MINT, S_ERR_STIK, S_BTN_ON, S_BTN_OFF, S_BTN_MODE,
-  S_NOWIN, S_ABOUT1, S_ABOUT2, S_ABOUT3, S_ABOUT4, S_COUNT
+  S_NOWIN, S_LIC_TITLE, S_COUNT
 };
 static const char *const str_en[S_COUNT] = {
   "  uIP tool (network) ", "Network: %s", "ON", "OFF", "IP     : -",
@@ -49,10 +49,7 @@ static const char *const str_en[S_COUNT] = {
   "Error: not under MiNT", "Error: STiK/STinG loaded",
   "  Activate  ", " Deactivate ", "[DHCP/Static]",
   "[3][uIP tool:|no window available][ OK ]",
-  "[0][uIP tool ACC (unofficial)|uIPtool (c) 2013-2026|Mariusz Buras (Sqward)|UI (c) 2019-2026 P. Goralski|ACC: Haltero/Abstract, MIT][Next| OK ]",
-  "[0][uIP stack (c) Adam Dunkels,|SICS - BSD licence.|RTL8019: egnite Software,|L. Beaudoin - BSD / GPL.|libcmini: FreeMiNT - LGPL][Next| OK ]",
-  "[0][This product includes|software developed by|Adam Dunkels, egnite Software|GmbH and the University of|California, Berkeley.][Next| OK ]",
-  "[0][Full licence texts:|LICENSE.TXT (with UIP.ACC)|Not endorsed by the uIPtool|authors. Official version:|codeberg.org/nokturnal][ OK ]"
+  " uIP tool - About / Licences "
 };
 static const char *const str_fr[S_COUNT] = {
   "  uIP tool (r\x82seau) ", "R\x82seau : %s", "ACTIF", "INACTIF", "IP     : -",
@@ -61,13 +58,60 @@ static const char *const str_fr[S_COUNT] = {
   "Erreur: pas sous MiNT", "Erreur: STiK/STinG charg\x82",
   "  Activer   ", " D\x82sactiver ", "[DHCP/Fixe]",
   "[3][uIP tool:|plus de fen\x88tre disponible][ OK ]",
-  "[0][uIP tool ACC (non officiel)|uIPtool (c) 2013-2026|Mariusz Buras (Sqward)|IHM (c) 2019-2026 P. Goralski|ACC : Haltero/Abstract, MIT][Suite| OK ]",
-  "[0][Pile uIP (c) Adam Dunkels,|SICS - licence BSD.|RTL8019 : egnite Software,|L. Beaudoin - BSD / GPL.|libcmini : FreeMiNT - LGPL][Suite| OK ]",
-  "[0][This product includes|software developed by|Adam Dunkels, egnite Software|GmbH and the University of|California, Berkeley.][Suite| OK ]",
-  "[0][Licences compl\x8Ates :|LICENSE.TXT (avec UIP.ACC)|Non approuv\x82 par les auteurs|d'uIPtool. Officiel :|codeberg.org/nokturnal][ OK ]"
+  " uIP tool - A propos / Licences "
 };
 static const char *const *tr = str_en;
 #define T(id) (tr[id])
+
+/* ---- About / licences window: the full licence text is embedded ------ */
+#include "license_text.h"
+
+static const char *const about_en[] = {
+  "uIP tool ACC - NetUSBee network in the background of GEM",
+  "UNOFFICIAL version: not endorsed or maintained by the uIPtool authors.",
+  "Official uIPtool: https://codeberg.org/nokturnal/uiptool",
+  "",
+  "Accessory front end: Haltero / Abstract 2026 - MIT licence.",
+  "Written with the help of an AI assistant (Claude).",
+  "libcmini (linked in): FreeMiNT project - LGPL.",
+  "",
+  "This product includes software developed by Adam Dunkels.",
+  "This product includes software developed by egnite Software GmbH",
+  "and its contributors.",
+  "This product includes software developed by the University of",
+  "California, Berkeley and its contributors.",
+  "",
+  "------------------------- uIPtool LICENSE --------------------------",
+  "",
+};
+static const char *const about_fr[] = {
+  "uIP tool ACC - r\202seau NetUSBee en arri\212re-plan du GEM",
+  "Version NON OFFICIELLE : ni approuv\202e ni maintenue par les auteurs",
+  "d'uIPtool. uIPtool officiel : https://codeberg.org/nokturnal/uiptool",
+  "",
+  "Accessoire : Haltero / Abstract 2026 - licence MIT.",
+  "\220crit avec l'aide d'une IA (Claude).",
+  "libcmini (incluse) : projet FreeMiNT - LGPL.",
+  "",
+  "Mentions obligatoires (texte original des licences) :",
+  "This product includes software developed by Adam Dunkels.",
+  "This product includes software developed by egnite Software GmbH",
+  "and its contributors.",
+  "This product includes software developed by the University of",
+  "California, Berkeley and its contributors.",
+  "",
+  "------------------------- LICENCE uIPtool --------------------------",
+  "",
+};
+#define ABOUT_EN_LINES ((int)(sizeof(about_en) / sizeof(about_en[0])))
+#define ABOUT_FR_LINES ((int)(sizeof(about_fr) / sizeof(about_fr[0])))
+static const char *const *about = about_en;
+static int about_lines = ABOUT_EN_LINES;
+#define LIC_TOTAL (about_lines + LICENSE_LINES)
+static const char *lic_line(int i)
+{
+  return i < about_lines ? about[i] : license_text[i - about_lines];
+}
 
 /* supervisor: 1 if the TOS language is French (France / Swiss French) */
 static long detect_french(void)
@@ -92,6 +136,9 @@ static long detect_french(void)
 /* acccrit.s: set while TOS is inside a critical-error alert (GEMDOS busy) */
 extern volatile short uipacc_in_critic;
 extern long uipacc_install_critic(void);
+
+static int ensure_vdi(void);
+static void release_vdi(void);
 
 static short ap_id, menu_id = -1;
 static short vh = -1, phys_h;
@@ -296,10 +343,7 @@ static void open_window(void)
   short x, y, w, h, dx, dy, dw, dh;
 
   if (win >= 0) { wind_set(win, WF_TOP, 0, 0, 0, 0); return; }
-  if (vh < 0) {
-    vh = v_opnvwk(phys_h);
-    if (vh <= 0) { vh = -1; return; }
-  }
+  if (!ensure_vdi()) return;
   wind_calc(WC_BORDER, WIN_KIND, 0, 0, wkw, wkh, &dx, &dy, &w, &h);
   wind_get(0, WF_WORKXYWH, &dx, &dy, &dw, &dh); /* desktop area */
   if (wx < 0) { x = dx + dw - w - 8; y = dy + 8; }
@@ -326,7 +370,7 @@ static void close_window(int delete_only)
   }
   /* on AC_CLOSE the AES has already removed the window itself */
   win = -1;
-  if (vh > 0) { v_clsvwk(vh); vh = -1; }
+  release_vdi();
 }
 
 static void refresh_status(int force)
@@ -360,13 +404,172 @@ static void wait_release(void)
   evnt_multi(MU_BUTTON, 1, 1, 0, 0, b, &x, &y, &mb, &k, &kr, &nc);
 }
 
-/* About / licences: a chain of GEM alerts ("Next" / "OK") */
-static void show_about(void)
+/* ------------------------------------------------------------------ */
+/* About / licences window: scrollable view of the embedded texts     */
+#define LIC_KIND (NAME|CLOSER|FULLER|MOVER|SIZER|UPARROW|DNARROW|VSLIDE)
+static short lic_win = -1;
+static int lic_top = 0;
+static short lic_full = 0, lic_px, lic_py, lic_pw, lic_ph;
+
+static int lic_visible(void)
 {
-  int page;
-  for (page = S_ABOUT1; page <= S_ABOUT4; page++) {
-    short b = form_alert(1, T(page));
-    if (page < S_ABOUT4 && b != 1) break;   /* "OK" stops, "Next" goes on */
+  short x, y, w, h;
+  wind_get(lic_win, WF_WORKXYWH, &x, &y, &w, &h);
+  return h / char_h > 0 ? h / char_h : 1;
+}
+
+static void lic_clamp(void)
+{
+  int maxtop = LIC_TOTAL - lic_visible();
+  if (maxtop < 0) maxtop = 0;
+  if (lic_top > maxtop) lic_top = maxtop;
+  if (lic_top < 0) lic_top = 0;
+}
+
+static void lic_slider(void)
+{
+  int vis = lic_visible(), maxtop = LIC_TOTAL - vis;
+  long size = (1000L * vis) / LIC_TOTAL;
+  if (size > 1000) size = 1000;
+  wind_set(lic_win, WF_VSLSIZE, (short)size, 0, 0, 0);
+  wind_set(lic_win, WF_VSLIDE, maxtop > 0 ? (short)((1000L * lic_top) / maxtop) : 0, 0, 0, 0);
+}
+
+static void lic_draw(short wkx, short wky, short wkw, short wkh, const short *clip)
+{
+  short r[4];
+  int row, rows = wkh / char_h + 1;
+  vs_clip(vh, 1, clip);
+  vsf_interior(vh, 1); vsf_color(vh, 0); vsf_perimeter(vh, 0);
+  r[0] = wkx; r[1] = wky; r[2] = wkx + wkw - 1; r[3] = wky + wkh - 1;
+  vr_recfl(vh, r);
+  vswr_mode(vh, 2); vst_color(vh, 1); vst_alignment(vh, 0, 5);
+  for (row = 0; row < rows && lic_top + row < LIC_TOTAL; row++) {
+    const char *l = lic_line(lic_top + row);
+    if (l[0]) v_gtext(vh, wkx + char_w / 2, wky + row * char_h, l);
+  }
+  vs_clip(vh, 0, clip);
+}
+
+static void lic_redraw(short x, short y, short w, short h)
+{
+  short wk[4], rr[4], area[4], clip[4];
+  if (lic_win < 0) return;
+  area[0] = x; area[1] = y; area[2] = w; area[3] = h;
+  wind_get(lic_win, WF_WORKXYWH, &wk[0], &wk[1], &wk[2], &wk[3]);
+  graf_mouse(256);
+  wind_update(BEG_UPDATE);
+  wind_get(lic_win, WF_FIRSTXYWH, &rr[0], &rr[1], &rr[2], &rr[3]);
+  while (rr[2] && rr[3]) {
+    if (intersect(area, rr)) {
+      clip[0] = rr[0]; clip[1] = rr[1];
+      clip[2] = rr[0] + rr[2] - 1; clip[3] = rr[1] + rr[3] - 1;
+      lic_draw(wk[0], wk[1], wk[2], wk[3], clip);
+    }
+    wind_get(lic_win, WF_NEXTXYWH, &rr[0], &rr[1], &rr[2], &rr[3]);
+  }
+  wind_update(END_UPDATE);
+  graf_mouse(257);
+}
+
+static void lic_redraw_all(void)
+{
+  short x, y, w, h;
+  wind_get(lic_win, WF_WORKXYWH, &x, &y, &w, &h);
+  lic_redraw(x, y, w, h);
+}
+
+static void lic_scroll_to(int top)
+{
+  int old = lic_top;
+  lic_top = top;
+  lic_clamp();
+  if (lic_top != old) { lic_slider(); lic_redraw_all(); }
+}
+
+static int ensure_vdi(void)
+{
+  if (vh < 0) {
+    vh = v_opnvwk(phys_h);
+    if (vh <= 0) { vh = -1; return 0; }
+  }
+  return 1;
+}
+
+static void release_vdi(void)
+{
+  if (win < 0 && lic_win < 0 && vh > 0) { v_clsvwk(vh); vh = -1; }
+}
+
+static void open_lic_window(void)
+{
+  short dx, dy, dw, dh, x, y, w, h, d;
+  if (lic_win >= 0) { wind_set(lic_win, WF_TOP, 0, 0, 0, 0); return; }
+  if (!ensure_vdi()) return;
+  wind_get(0, WF_WORKXYWH, &dx, &dy, &dw, &dh);
+  wind_calc(WC_BORDER, LIC_KIND, 0, 0, (LIC_COLS + 2) * char_w, 20 * char_h, &d, &d, &w, &h);
+  if (w > dw) w = dw;
+  if (h > dh) h = dh;
+  x = dx + (dw - w) / 2; y = dy + (dh - h) / 2;
+  lic_win = wind_create(LIC_KIND, dx, dy, dw, dh);
+  if (lic_win < 0) { lic_win = -1; form_alert(1, T(S_NOWIN)); release_vdi(); return; }
+  lic_top = 0; lic_full = 0;
+  wind_set_str(lic_win, WF_NAME, T(S_LIC_TITLE));
+  wind_open(lic_win, x, y, w, h);
+  lic_slider();
+}
+
+static void close_lic_window(int delete_only)
+{
+  if (lic_win < 0) return;
+  if (!delete_only) { wind_close(lic_win); wind_delete(lic_win); }
+  lic_win = -1;
+  release_vdi();
+}
+
+static void lic_message(short *buf)
+{
+  short x, y, w, h;
+  switch (buf[0]) {
+  case WM_REDRAW: lic_redraw(buf[4], buf[5], buf[6], buf[7]); break;
+  case WM_TOPPED: wind_set(lic_win, WF_TOP, 0, 0, 0, 0); break;
+  case WM_CLOSED: close_lic_window(0); break;
+  case WM_MOVED:
+    wind_set(lic_win, WF_CURRXYWH, buf[4], buf[5], buf[6], buf[7]);
+    break;
+  case WM_SIZED:
+    if (buf[6] < 20 * char_w) buf[6] = 20 * char_w;
+    if (buf[7] < 6 * char_h) buf[7] = 6 * char_h;
+    wind_set(lic_win, WF_CURRXYWH, buf[4], buf[5], buf[6], buf[7]);
+    lic_clamp(); lic_slider(); lic_redraw_all();
+    break;
+  case WM_FULLED:
+    if (!lic_full) {
+      wind_get(lic_win, WF_CURRXYWH, &lic_px, &lic_py, &lic_pw, &lic_ph);
+      wind_get(0, WF_WORKXYWH, &x, &y, &w, &h);
+      wind_set(lic_win, WF_CURRXYWH, x, y, w, h);
+    } else {
+      wind_set(lic_win, WF_CURRXYWH, lic_px, lic_py, lic_pw, lic_ph);
+    }
+    lic_full = !lic_full;
+    lic_clamp(); lic_slider(); lic_redraw_all();
+    break;
+  case WM_ARROWED: {
+    int vis = lic_visible();
+    switch (buf[4]) {
+    case 0: lic_scroll_to(lic_top - vis); break;   /* page up   */
+    case 1: lic_scroll_to(lic_top + vis); break;   /* page down */
+    case 2: lic_scroll_to(lic_top - 1); break;     /* line up   */
+    case 3: lic_scroll_to(lic_top + 1); break;     /* line down */
+    }
+    break;
+  }
+  case WM_VSLID: {
+    int maxtop = LIC_TOTAL - lic_visible();
+    if (maxtop < 0) maxtop = 0;
+    lic_scroll_to((int)(((long)buf[4] * maxtop + 500) / 1000));
+    break;
+  }
   }
 }
 
@@ -388,7 +591,7 @@ static void handle_click(short mx, short my)
     run_super(uipacc_toggle_ipmode);
     refresh_status(1);
   } else if (col >= BTN3_C0 && col <= BTN3_C1) {
-    show_about();
+    open_lic_window();
   }
 }
 
@@ -426,7 +629,9 @@ int main(void)
   uipacc_set_config_path(cfg_path);
   strcpy(uipacc_lastlog, "");
 
-  if (Supexec(detect_french)) tr = str_fr;
+  if (Supexec(detect_french)) {
+    tr = str_fr; about = about_fr; about_lines = ABOUT_FR_LINES;
+  }
   menu_id = menu_register(ap_id, T(S_TITLE));
 
   load_autostart();
@@ -452,14 +657,17 @@ int main(void)
     if ((dbg_ticks & 15) == 0) redraw_all();
 #endif
 
-    if (ev & MU_MESAG) {
+    if ((ev & MU_MESAG) && lic_win >= 0 && buf[0] >= WM_REDRAW && buf[0] <= WM_SIZED
+        && buf[3] == lic_win) {
+      lic_message(buf);
+    } else if (ev & MU_MESAG) {
       switch (buf[0]) {
       case AC_OPEN:
         if (buf[4] == menu_id) open_window();
         break;
       case AC_CLOSE:
         /* desktop or a program is starting: AES already took our window */
-        if (buf[3] == menu_id) { close_window(1); }
+        if (buf[3] == menu_id) { close_window(1); close_lic_window(1); }
         break;
       case WM_REDRAW:
         if (buf[3] == win) redraw(buf[4], buf[5], buf[6], buf[7]);

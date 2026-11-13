@@ -12,10 +12,19 @@
 #define WM_TOPPED 21
 #define WM_CLOSED 22
 #define WM_MOVED  28
+#define WM_FULLED   23
+#define WM_ARROWED  24
+#define WM_VSLID    26
+#define WM_SIZED    27
 
 #define NAME   0x0001
 #define CLOSER 0x0002
 #define MOVER  0x0008
+#define FULLER  0x0004
+#define SIZER   0x0020
+#define UPARROW 0x0040
+#define DNARROW 0x0080
+#define VSLIDE  0x0100
 
 #define WF_NAME       2
 #define WF_WORKXYWH   4
@@ -23,6 +32,8 @@
 #define WF_FIRSTXYWH 11
 #define WF_NEXTXYWH  12
 #define WF_TOP       10
+#define WF_VSLIDE     9
+#define WF_VSLSIZE   16
 
 #define WC_BORDER 0
 #define WC_WORK   1

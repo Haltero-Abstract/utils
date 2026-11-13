@@ -34,6 +34,12 @@ build/tos/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) -m68000 -Wa,--register-prefix-optional -c $< -o $@
 
+# full licence text embedded in the accessory (About / Licences window)
+$(SRC)/license_text.h: LICENSE.md gen_license.py
+	python3 gen_license.py LICENSE.md $@
+
+build/acc/src/acc.o build/fake/src/acc.o: $(SRC)/license_text.h
+
 build/acc/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -DUIP_ACC=1 -include $(SRC)/accshim.h -c $< -o $@
