@@ -21,7 +21,7 @@
 #include "uipacc.h"
 
 #define WIN_KIND   (NAME|CLOSER|MOVER)
-#define COLS 32
+#define COLS 33
 #define ROWS 7
 
 #define POLL_MS_ACTIVE 20     /* timer when idle network     */
@@ -40,7 +40,7 @@ char uipacc_lastlog[64];
 enum {
   S_TITLE, S_NET, S_ON, S_OFF, S_IP_NONE, S_IP_WAIT, S_MODE, S_STATIC,
   S_HINT, S_ERR_DRV, S_ERR_MINT, S_ERR_STIK, S_BTN_ON, S_BTN_OFF, S_BTN_MODE,
-  S_NOWIN, S_COUNT
+  S_NOWIN, S_ABOUT1, S_ABOUT2, S_ABOUT3, S_ABOUT4, S_COUNT
 };
 static const char *const str_en[S_COUNT] = {
   "  uIP tool (network) ", "Network: %s", "ON", "OFF", "IP     : -",
@@ -48,7 +48,11 @@ static const char *const str_en[S_COUNT] = {
   "Web http://IP  FTP port 21", "Error: NetUSBee not found?",
   "Error: not under MiNT", "Error: STiK/STinG loaded",
   "  Activate  ", " Deactivate ", "[DHCP/Static]",
-  "[3][uIP tool:|no window available][ OK ]"
+  "[3][uIP tool:|no window available][ OK ]",
+  "[0][uIP tool ACC (unofficial)|uIPtool (c) 2013-2026|Mariusz Buras (Sqward)|UI (c) 2019-2026 P. Goralski|ACC: Haltero/Abstract, MIT][Next| OK ]",
+  "[0][uIP stack (c) Adam Dunkels,|SICS - BSD licence.|RTL8019: egnite Software,|L. Beaudoin - BSD / GPL.|libcmini: FreeMiNT - LGPL][Next| OK ]",
+  "[0][This product includes|software developed by|Adam Dunkels, egnite Software|GmbH and the University of|California, Berkeley.][Next| OK ]",
+  "[0][Full licence texts:|LICENSE.TXT (with UIP.ACC)|Not endorsed by the uIPtool|authors. Official version:|codeberg.org/nokturnal][ OK ]"
 };
 static const char *const str_fr[S_COUNT] = {
   "  uIP tool (r\x82seau) ", "R\x82seau : %s", "ACTIF", "INACTIF", "IP     : -",
@@ -56,7 +60,11 @@ static const char *const str_fr[S_COUNT] = {
   "Web http://IP  FTP port 21", "Erreur: NetUSBee absente ?",
   "Erreur: pas sous MiNT", "Erreur: STiK/STinG charg\x82",
   "  Activer   ", " D\x82sactiver ", "[DHCP/Fixe]",
-  "[3][uIP tool:|plus de fen\x88tre disponible][ OK ]"
+  "[3][uIP tool:|plus de fen\x88tre disponible][ OK ]",
+  "[0][uIP tool ACC (non officiel)|uIPtool (c) 2013-2026|Mariusz Buras (Sqward)|IHM (c) 2019-2026 P. Goralski|ACC : Haltero/Abstract, MIT][Suite| OK ]",
+  "[0][Pile uIP (c) Adam Dunkels,|SICS - licence BSD.|RTL8019 : egnite Software,|L. Beaudoin - BSD / GPL.|libcmini : FreeMiNT - LGPL][Suite| OK ]",
+  "[0][This product includes|software developed by|Adam Dunkels, egnite Software|GmbH and the University of|California, Berkeley.][Suite| OK ]",
+  "[0][Licences compl\x8Ates :|LICENSE.TXT (avec UIP.ACC)|Non approuv\x82 par les auteurs|d'uIPtool. Officiel :|codeberg.org/nokturnal][ OK ]"
 };
 static const char *const *tr = str_en;
 #define T(id) (tr[id])
@@ -195,7 +203,7 @@ static void fmt_line(char *out, int row)
     break;
 #endif
   case 6:
-    sprintf(out, "[%s] %s",
+    sprintf(out, "[%s] %s [?]",
             st.active ? T(S_BTN_OFF) : T(S_BTN_ON), T(S_BTN_MODE));
     break;
   }
@@ -206,6 +214,8 @@ static void fmt_line(char *out, int row)
 #define BTN1_C1 14
 #define BTN2_C0 15
 #define BTN2_C1 ((int)(BTN2_C0 + strlen(T(S_BTN_MODE)) - 1))
+#define BTN3_C0 (BTN2_C1 + 2)
+#define BTN3_C1 (BTN3_C0 + 2)
 
 static void draw_rect(short wkx, short wky, short wkw, short wkh, const short *clip)
 {
@@ -235,6 +245,8 @@ static void draw_rect(short wkx, short wky, short wkw, short wkh, const short *c
               wkx + char_w / 2 + BTN1_C1 * char_w, by + char_h);
     v_box(vh, wkx + char_w / 2 + BTN2_C0 * char_w - 1, by - 1,
               wkx + char_w / 2 + (BTN2_C1 + 1) * char_w, by + char_h);
+    v_box(vh, wkx + char_w / 2 + BTN3_C0 * char_w - 1, by - 1,
+              wkx + char_w / 2 + (BTN3_C1 + 1) * char_w, by + char_h);
   }
   vs_clip(vh, 0, clip);
 }
@@ -348,6 +360,16 @@ static void wait_release(void)
   evnt_multi(MU_BUTTON, 1, 1, 0, 0, b, &x, &y, &mb, &k, &kr, &nc);
 }
 
+/* About / licences: a chain of GEM alerts ("Next" / "OK") */
+static void show_about(void)
+{
+  int page;
+  for (page = S_ABOUT1; page <= S_ABOUT4; page++) {
+    short b = form_alert(1, T(page));
+    if (page < S_ABOUT4 && b != 1) break;   /* "OK" stops, "Next" goes on */
+  }
+}
+
 static void handle_click(short mx, short my)
 {
   short x, y, w, h;
@@ -365,6 +387,8 @@ static void handle_click(short mx, short my)
   } else if (col >= BTN2_C0 && col <= BTN2_C1) {
     run_super(uipacc_toggle_ipmode);
     refresh_status(1);
+  } else if (col >= BTN3_C0 && col <= BTN3_C1) {
+    show_about();
   }
 }
 

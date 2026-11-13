@@ -21,6 +21,9 @@ files, start GEM programs).
 3. **[ Activate ]** starts the network, **[DHCP/Static]** toggles DHCP / static IP
    (static settings in `C:\UIP.CFG`, same format as `uip.tos`).
 4. Browse `http://<IP>` from your PC, or FTP to port 21 (passive mode, any login).
+5. **[?]** shows the About pages: copyrights, licences, the required BSD
+   acknowledgements and where to find the full licence texts
+   (`LICENSE.TXT`, keep it next to `UIP.ACC`).
 
 The ON/OFF state is saved in `C:\UIPACC.INF` and restored at boot.
 
