@@ -258,7 +258,7 @@ static void fmt_line(char *out, int row)
     strncpy(out, uipacc_lastlog, COLS);
     out[COLS] = 0;
     break;
-#ifdef UIPACC_FAKE_NIC
+#if defined(UIPACC_FAKE_NIC) && !defined(UIPACC_SHOT)
   case 5:
     sprintf(out, "dbg t=%ld e=%x b=%d top=%d/%d", dbg_ticks, dbg_ev, dbg_btn, dbg_top, win);
     break;
@@ -668,7 +668,7 @@ int main(void)
 
     ev = evnt_multi(flags, 1, 1, 1, ms, buf, &mx, &my, &mb, &ks, &kr, &nc);
     dbg_ticks++; dbg_ev = ev; dbg_top = top;
-#ifdef UIPACC_FAKE_NIC
+#if defined(UIPACC_FAKE_NIC) && !defined(UIPACC_SHOT)
     if ((dbg_ticks & 15) == 0) redraw_all();
 #endif
 
