@@ -37,8 +37,13 @@ build/tos/%.o: %.s
 # full licence text embedded in the accessory (About / Licences window)
 $(SRC)/license_text.h: LICENSE.md gen_license.py
 	python3 gen_license.py LICENSE.md $@
+# user guide embedded in the accessory (EN / FR)
+$(SRC)/help_en.h: doc/HELP_EN.TXT gen_license.py
+	python3 gen_license.py $< $@ help_en
+$(SRC)/help_fr.h: doc/HELP_FR.TXT gen_license.py
+	python3 gen_license.py $< $@ help_fr
 
-build/acc/src/acc.o build/fake/src/acc.o: $(SRC)/license_text.h
+build/acc/src/acc.o build/fake/src/acc.o: $(SRC)/license_text.h $(SRC)/help_en.h $(SRC)/help_fr.h
 
 build/acc/%.o: %.c
 	@mkdir -p $(dir $@)

@@ -21,10 +21,11 @@ files, start GEM programs).
 3. **[ Activate ]** starts the network, **[DHCP/Static]** toggles DHCP / static IP
    (static settings in `C:\UIP.CFG`, same format as `uip.tos`).
 4. Browse `http://<IP>` from your PC, or FTP to port 21 (passive mode, any login).
-5. **[?]** opens the *About / Licences* window: the unofficial notice, the
-   required BSD acknowledgements and the **complete uIPtool `LICENSE.md`,
-   embedded in `UIP.ACC`** (scrollable, resizable). The licence text can
-   therefore never be separated from the program.
+5. **[?]** opens the *Help / About / Licences* window, **all embedded in
+   `UIP.ACC`** (scrollable, resizable, EN/FR): the user guide, the
+   unofficial notice, the required BSD acknowledgements and the complete
+   uIPtool `LICENSE.md`. Nothing can get lost: `UIP.ACC` is the only file
+   you need.
 
 The ON/OFF state is saved in `C:\UIPACC.INF` and restored at boot.
 
@@ -60,7 +61,9 @@ m68k-atari-mintelf-objcopy --prefix-symbols=_ \
   $(m68k-atari-mintelf-gcc -m68000 -print-libgcc-file-name) /opt/cross/ulib/libgcc.a
 # uIP tool
 sh gen_ui.sh
-python3 gen_license.py LICENSE.md src/license_text.h   # also done by the Makefile
+python3 gen_license.py LICENSE.md src/license_text.h   # these 3 are also done by the Makefile
+python3 gen_license.py doc/HELP_EN.TXT src/help_en.h help_en
+python3 gen_license.py doc/HELP_FR.TXT src/help_fr.h help_fr
 make -f Makefile.acc LIBCMINI=/path/to/libcmini        # bin: build/uip.acc, build/uip.tos
 make -f Makefile.acc build/uip_test.acc                  # simulated-NIC test build
 ```
@@ -69,7 +72,7 @@ make -f Makefile.acc build/uip_test.acc                  # simulated-NIC test bu
 | File | |
 |---|---|
 | `src/acc.c` | GEM windows (status + About/Licences), `evnt_multi` loop, ON/OFF, autostart, EN/FR strings |
-| `gen_license.py` → `src/license_text.h` | `LICENSE.md` embedded in the accessory |
+| `gen_license.py` → `src/license_text.h`, `src/help_en.h`, `src/help_fr.h` | licence and user guide (`doc/HELP_*.TXT`) embedded in the accessory |
 | `src/accgem.c/.h` | minimal AES/VDI bindings |
 | `src/acccrit.s` | `etv_critic` hook (pause during disk-error alerts) |
 | `src/uipacc.h`, `src/accshim.h` | accessory ↔ stack interface, `printf` capture |
@@ -111,4 +114,4 @@ Required acknowledgements:
 Version **accessoire** d'uIPtool : le serveur web + FTP NetUSBee tourne
 pendant que le bureau GEM reste utilisable. Copier `bin/UIP.ACC` en `C:\`,
 redémarrer, puis menu *Bureau* → **uIP tool (reseau)** → **Activer**.
-Notice complète : [`LISEZMOI.TXT`](LISEZMOI.TXT).
+Le mode d'emploi complet et les licences sont intégrés dans l'accessoire : bouton **[?]**.

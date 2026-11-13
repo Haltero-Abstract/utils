@@ -1,0 +1,47 @@
+MODE D'EMPLOI
+=============
+
+uIP tool ACC fait tourner le serveur web + FTP d'uIPtool (carte
+NetUSBee / EtherNEC) pendant que le bureau GEM reste utilisable :
+ouvrir des dossiers, copier des fichiers, lancer des programmes GEM.
+
+INSTALLATION
+  1. Copier UIP.ACC à la racine du disque de boot (C:\UIP.ACC).
+  2. Redémarrer l'Atari.
+  3. Menu "Bureau" > "uIP tool (réseau)" : la fenêtre s'ouvre.
+
+BOUTONS
+  [ Activer ] / [ Désactiver ]
+      Allume ou coupe le réseau.
+  [DHCP/Fixe]
+      Bascule entre DHCP et l'IP fixe définie dans C:\UIP.CFG.
+  [?]
+      Cette fenêtre : mode d'emploi, mentions et licences.
+
+UTILISATION
+  La fenêtre affiche l'adresse IP de l'Atari. Sur le PC :
+    - navigateur web : http://<adresse IP>
+    - FTP : port 21, mode PASSIF, identifiant quelconque.
+
+  L'état Actif/Inactif est mémorisé dans C:\UIPACC.INF : si le réseau
+  était actif, il redémarre tout seul au prochain boot.
+
+  C:\UIP.CFG (même format que uip.tos) :
+    <0=DHCP|1=fixe> 0 0 <ip> <masque> <passerelle>
+
+A SAVOIR
+  - Le réseau tourne tant que le GEM tourne (bureau ou programme GEM).
+    Quand un jeu ou un programme TOS prend toute la machine, le réseau
+    est en pause et reprend au retour au bureau.
+  - Attendre la fin des transferts avant de lancer un jeu.
+  - Le débit est plus faible qu'avec UIP.TOS plein écran : le réseau
+    est servi entre deux événements GEM, toutes les 20 ms.
+  - L'exécution à distance ("run" de l'interface web, uip-run.py) est
+    désactivée dans l'accessoire : utiliser UIP.TOS pour cela.
+  - Pendant une alerte disque ("lecteur A: ne répond pas"), le réseau
+    se met en pause (GEMDOS n'est pas ré-entrant).
+  - Incompatible avec STiK / STinG et MiNT (comme uip.tos).
+  - La langue (français / anglais) suit celle du TOS.
+
+Validé sur : Falcon 030 + FPU 68882, 14 Mo, TOS 4.04,
+CompactFlash 4 Go / HDDriver 12, NetUSBee.

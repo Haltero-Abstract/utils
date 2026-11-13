@@ -49,7 +49,7 @@ static const char *const str_en[S_COUNT] = {
   "Error: not under MiNT", "Error: STiK/STinG loaded",
   "  Activate  ", " Deactivate ", "[DHCP/Static]",
   "[3][uIP tool:|no window available][ OK ]",
-  " uIP tool - About / Licences "
+  " uIP tool - Help / About / Licences "
 };
 static const char *const str_fr[S_COUNT] = {
   "  uIP tool (r\x82seau) ", "R\x82seau : %s", "ACTIF", "INACTIF", "IP     : -",
@@ -58,15 +58,20 @@ static const char *const str_fr[S_COUNT] = {
   "Erreur: pas sous MiNT", "Erreur: STiK/STinG charg\x82",
   "  Activer   ", " D\x82sactiver ", "[DHCP/Fixe]",
   "[3][uIP tool:|plus de fen\x88tre disponible][ OK ]",
-  " uIP tool - A propos / Licences "
+  " uIP tool - Aide / \266 propos / Licences "
 };
 static const char *const *tr = str_en;
 #define T(id) (tr[id])
 
 /* ---- About / licences window: the full licence text is embedded ------ */
 #include "license_text.h"
+#include "help_en.h"
+#include "help_fr.h"
 
 static const char *const about_en[] = {
+  "",
+  "========================= NOTICES =========================",
+  "",
   "uIP tool ACC - NetUSBee network in the background of GEM",
   "UNOFFICIAL version: not endorsed or maintained by the uIPtool authors.",
   "Official uIPtool: https://codeberg.org/nokturnal/uiptool",
@@ -85,6 +90,9 @@ static const char *const about_en[] = {
   "",
 };
 static const char *const about_fr[] = {
+  "",
+  "========================= MENTIONS =========================",
+  "",
   "uIP tool ACC - r\202seau NetUSBee en arri\212re-plan du GEM",
   "Version NON OFFICIELLE : ni approuv\202e ni maintenue par les auteurs",
   "d'uIPtool. uIPtool officiel : https://codeberg.org/nokturnal/uiptool",
@@ -107,10 +115,16 @@ static const char *const about_fr[] = {
 #define ABOUT_FR_LINES ((int)(sizeof(about_fr) / sizeof(about_fr[0])))
 static const char *const *about = about_en;
 static int about_lines = ABOUT_EN_LINES;
-#define LIC_TOTAL (about_lines + LICENSE_LINES)
+static const char *const *help = help_en;
+static int help_lines = HELP_EN_LINES;
+/* window content: user guide, then notices, then the full licence */
+#define LIC_TOTAL (help_lines + about_lines + LICENSE_TEXT_LINES)
 static const char *lic_line(int i)
 {
-  return i < about_lines ? about[i] : license_text[i - about_lines];
+  if (i < help_lines) return help[i];
+  i -= help_lines;
+  if (i < about_lines) return about[i];
+  return license_text[i - about_lines];
 }
 
 /* supervisor: 1 if the TOS language is French (France / Swiss French) */
@@ -631,6 +645,7 @@ int main(void)
 
   if (Supexec(detect_french)) {
     tr = str_fr; about = about_fr; about_lines = ABOUT_FR_LINES;
+    help = help_fr; help_lines = HELP_FR_LINES;
   }
   menu_id = menu_register(ap_id, T(S_TITLE));
 

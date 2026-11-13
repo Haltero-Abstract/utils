@@ -1,0 +1,47 @@
+USER GUIDE
+==========
+
+uIP tool ACC runs the uIPtool web + FTP server (NetUSBee / EtherNEC
+cartridge) while the GEM desktop stays usable: open folders, copy
+files, start GEM programs.
+
+INSTALLATION
+  1. Copy UIP.ACC to the root of the boot drive (C:\UIP.ACC).
+  2. Reboot the Atari.
+  3. "Desk" menu > "uIP tool (network)": the window opens.
+
+BUTTONS
+  [ Activate ] / [ Deactivate ]
+      Switches the network on or off.
+  [DHCP/Static]
+      Toggles between DHCP and the static IP set in C:\UIP.CFG.
+  [?]
+      This window: user guide, notices and licences.
+
+USAGE
+  The window shows the Atari's IP address. On your PC:
+    - web browser: http://<IP address>
+    - FTP: port 21, PASSIVE mode, any login.
+
+  The ON/OFF state is saved in C:\UIPACC.INF: if the network was on,
+  it starts again automatically at the next boot.
+
+  C:\UIP.CFG (same format as uip.tos):
+    <0=DHCP|1=static> 0 0 <ip> <netmask> <gateway>
+
+GOOD TO KNOW
+  - The network runs as long as GEM runs (desktop or GEM program).
+    When a game or TOS program takes over the machine, the network
+    pauses and resumes back on the desktop.
+  - Let transfers finish before starting a game.
+  - Throughput is lower than full-screen UIP.TOS: the network is
+    serviced between GEM events, every 20 ms.
+  - Remote execution ("run" in the web interface, uip-run.py) is
+    disabled in the accessory: use UIP.TOS for that.
+  - During a disk-error alert ("drive A: not responding") the network
+    pauses (GEMDOS is not re-entrant).
+  - Not compatible with STiK / STinG or MiNT (same as uip.tos).
+  - The language (French / English) follows the TOS language.
+
+Validated on: Falcon 030 + 68882 FPU, 14 MB, TOS 4.04,
+4 GB CompactFlash / HDDriver 12, NetUSBee.
