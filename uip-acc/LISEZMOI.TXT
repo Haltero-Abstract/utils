@@ -21,6 +21,9 @@ UTILISATION
 -----------
 [ Activer ] / [ Desactiver ]  : allume / coupe le reseau.
 [DHCP/Fixe]                   : bascule DHCP <-> IP fixe (lue dans UIP.CFG).
+[?]                           : A propos : copyrights, licences, mentions
+                                obligatoires (textes complets : LICENSE.TXT,
+                                a garder a cote de UIP.ACC).
 La fenetre affiche l'adresse IP : la taper dans le navigateur du PC
 (http://IP) ou se connecter en FTP (port 21, mode PASSIF, login quelconque).
 
